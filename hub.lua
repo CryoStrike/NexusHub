@@ -1,16 +1,16 @@
 --[[
-	NEXUS UI - Main Hub Module
+	NEXUS UI - Main Hub Module (All Categories Kept, Cleaned)
 ]]
 
-return function(REPO)
+return function(REPO, selectedLanguage)
 	local Nexus = loadstring(game:HttpGet(REPO .. "init.lua"))()
-	local Locales = loadstring(game:HttpGet(REPO .. "locales.lua"))()
 
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	local VirtualUser = game:GetService("VirtualUser")
 	local lp = Players.LocalPlayer
 
+	--------------------------------------------------------------- Tab icons
 	local CAN_ICON = writefile ~= nil and isfile ~= nil and getcustomasset ~= nil
 	local function icon(name)
 		if CAN_ICON then return REPO .. "assets/icons/" .. name .. ".png" end
@@ -18,7 +18,7 @@ return function(REPO)
 	end
 
 	local state = {
-		language = "English",
+		language = selectedLanguage or "English",
 		toggleKey = Enum.KeyCode.RightShift,
 		accentName = "Cyan",
 		walkSpeed = 16,
@@ -37,12 +37,7 @@ return function(REPO)
 		Red = Color3.fromRGB(255, 50, 50), Blue = Color3.fromRGB(50, 100, 255), Green = Color3.fromRGB(50, 255, 50),
 	}
 
-	local function tr(key)
-		local set = Locales.Strings[state.language]
-		return (set and set[key]) or Locales.Strings.English[key] or key
-	end
-
-	-- Core Logic Loop
+	--------------------------------------------------------------- Core Logic Loops
 	local function getHumanoid()
 		local char = lp.Character
 		return char and char:FindFirstChildOfClass("Humanoid") or nil
@@ -53,21 +48,22 @@ return function(REPO)
 		return char and char:FindFirstChild("HumanoidRootPart") or nil
 	end
 
-	RunService.Stepped:Connect(function()
+	local function applyCharacterStats()
 		local hum = getHumanoid()
 		if hum then
-			if state.walkSpeed and hum.WalkSpeed ~= state.walkSpeed then
-				hum.WalkSpeed = state.walkSpeed
-			end
-			if state.jumpPower then
-				if hum.RigType == Enum.HumanoidRigType.R15 and hum.UseJumpPower == false then
-					local targetHeight = state.jumpPower / 5
-					if hum.JumpHeight ~= targetHeight then hum.JumpHeight = targetHeight end
-				else
-					if hum.JumpPower ~= state.jumpPower then hum.JumpPower = state.jumpPower end
-				end
+			hum.WalkSpeed = state.walkSpeed
+			if hum.UseJumpPower == false then
+				hum.JumpHeight = state.jumpPower / 5
+			else
+				hum.JumpPower = state.jumpPower
 			end
 		end
+	end
+
+	lp.CharacterAdded:Connect(function(char)
+		char:WaitForChild("Humanoid")
+		task.wait(0.2)
+		applyCharacterStats()
 	end)
 
 	local antiAfkConnection
@@ -143,127 +139,106 @@ return function(REPO)
 		end
 	end)
 
+	--------------------------------------------------------------- Window Build
 	local Window
 	local function notify(title, content, kind)
 		if Window then Window:Notify({ Title = title, Content = content, Type = kind or "Info", Duration = 3 }) end
 	end
 
-	local function build(rebuilt)
-		Window = Nexus:CreateWindow({
-			Name = "NEXUS",
-			Subtitle = "TRANSLUCID THEME",
-			Icon = REPO .. "assets/nexus-ico.png",
-			Accent = ACCENTS[state.accentName],
-			ToggleKey = state.toggleKey,
-			Size = UDim2.fromOffset(700, 500),
-			Resizable = true,
-			MinSize = Vector2.new(560, 360),
-		})
-
-		-- Combat Tab
-		local Combat = Window:CreateTab(tr("tab_combat"), icon("combat"))
-		Combat:AddToggle({ Name = tr("combat_module"), Default = false, Flag = "combat_module", Callback = function(on) print("Combat:", on) end })
-		Combat:AddSlider({ Name = tr("range"), Min = 0, Max = 1000, Default = 250, Increment = 1, Suffix = " / 1000", Flag = "combat_range", Callback = function(v) print("Range:", v) end })
-		Combat:AddDropdown({ Name = tr("priority"), Options = { "Nearest", "Lowest Health", "Random" }, Default = "Nearest", Flag = "combat_priority", Callback = function(v) print("Priority:", v) end })
-		Combat:AddKeybind({ Name = tr("combat_key"), Default = Enum.KeyCode.R, Flag = "combat_key", Callback = function(key) print("Key:", key.Name) end })
-
-		-- Character Tab
-		local Character = Window:CreateTab(tr("tab_character"), icon("character"))
-		Character:AddSlider({
-			Name = tr("walk_speed"), Min = 16, Max = 100, Default = state.walkSpeed, Increment = 1, Flag = "walk_speed",
-			Callback = function(v) state.walkSpeed = v local hum = getHumanoid() if hum then hum.WalkSpeed = v end end,
-		})
-		Character:AddSlider({
-			Name = tr("jump_power"), Min = 50, Max = 200, Default = state.jumpPower, Increment = 1, Flag = "jump_power",
-			Callback = function(v) state.jumpPower = v local hum = getHumanoid() if hum then hum.JumpPower = v if hum.UseJumpPower == false then hum.JumpHeight = v / 5 end end end,
-		})
-		Character:AddToggle({ Name = tr("anti_afk"), Default = state.antiAfkEnabled, Flag = "anti_afk", Callback = function(on) state.antiAfkEnabled = on setupAntiAFK(on) end })
-		Character:AddButton({ Name = tr("reset_char"), Callback = function() local hum = getHumanoid() if hum then hum.Health = 0 end notify(tr("tab_character"), tr("pressed")) end })
-
-		-- Farm Tab
-		local Farm = Window:CreateTab(tr("tab_farm"), icon("farm"))
-		Farm:AddToggle({ Name = tr("farm_toggle"), Default = false, Flag = "farm_toggle", Callback = function(on) print("Farm:", on) end })
-		Farm:AddDropdown({ Name = tr("farm_mode"), Options = { "Nearest", "Selected" }, Default = "Nearest", Flag = "farm_mode", Callback = function(v) print("Mode:", v) end })
-		Farm:AddSlider({ Name = tr("farm_delay"), Min = 0, Max = 10, Default = 1, Increment = 1, Suffix = " s", Flag = "farm_delay", Callback = function(v) print("Delay:", v) end })
-		Farm:AddInput({ Name = tr("target_name"), Placeholder = tr("target_ph"), Flag = "farm_target", Callback = function(text, enter) if enter then print("Target:", text) end end })
-
-		-- Troll & Teleport Tab
-		local Troll = Window:CreateTab(tr("tab_troll"), icon("troll"))
-		Troll:AddToggle({ Name = tr("troll_module"), Default = false, Flag = "troll_module", Callback = function(on) print("Troll:", on) end })
-		Troll:AddDropdown({ Name = tr("effect"), Options = { "Spin", "Bounce", "Shake" }, Default = "Spin", Flag = "troll_effect", Callback = function(v) print("Effect:", v) end })
-		Troll:AddSlider({ Name = tr("intensity"), Min = 1, Max = 10, Default = 3, Increment = 1, Flag = "troll_intensity", Callback = function(v) print("Intensity:", v) end })
-		Troll:AddDropdown({ Name = tr("tp_target"), Options = getPlayerNames(), Default = getPlayerNames()[1], Flag = "tp_target_dropdown", Callback = function(name) state.selectedTarget = name end })
-		Troll:AddButton({
-			Name = tr("tp_button"),
-			Callback = function()
-				local targetPlayer = Players:FindFirstChild(state.selectedTarget)
-				if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-					local root = getRootPart()
-					if root then
-						root.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
-						notify(tr("tab_troll"), string.format(tr("tp_success"), targetPlayer.Name), "Success")
-					end
-				else
-					notify(tr("tab_troll"), tr("tp_err"), "Error")
-				end
-			end,
-		})
-
-		-- Visuals Tab
-		local Visuals = Window:CreateTab(tr("tab_visuals"), icon("visuals"))
-		local Display = Visuals:AddSection(tr("sec_display"))
-		Display:AddToggle({ Name = tr("highlight"), Default = state.espEnabled, Flag = "highlight", Callback = function(on) state.espEnabled = on end })
-		Display:AddSlider({ Name = tr("fov"), Min = 40, Max = 120, Default = 70, Increment = 1, Suffix = "°", Flag = "fov", Callback = function(v) workspace.CurrentCamera.FieldOfView = v end })
-		
-		local RoleColors = Visuals:AddSection(tr("sec_esp_colors"))
-		RoleColors:AddColorPicker({ Name = tr("col_murder"), Default = state.colorMurderer, Flag = "col_murder", Callback = function(color) state.colorMurderer = color end })
-		RoleColors:AddColorPicker({ Name = tr("col_sheriff"), Default = state.colorSheriff, Flag = "col_sheriff", Callback = function(color) state.colorSheriff = color end })
-		RoleColors:AddColorPicker({ Name = tr("col_innocent"), Default = state.colorInnocent, Flag = "col_innocent", Callback = function(color) state.colorInnocent = color end })
-
-		-- Settings Tab
-		local Settings = Window:CreateTab(tr("tab_settings"), icon("settings"))
-		local Theming = Settings:AddSection(tr("sec_theme"))
-		Theming:AddDropdown({
-			Name = tr("accent"), Options = { "Cyan", "Violet", "Emerald", "Crimson", "Gold", "Red", "Blue", "Green" }, Default = state.accentName,
-			Callback = function(name) state.accentName = name Window:SetAccent(ACCENTS[name]) end,
-		})
-
-		local Interface = Settings:AddSection(tr("sec_interface"))
-		Interface:AddKeybind({ Name = tr("hide_key"), Default = state.toggleKey, OnChanged = function(key) if key then state.toggleKey = key Window:SetToggleKey(key) end end })
-		Interface:AddButton({ Name = tr("minimize"), Callback = function() Window:Minimize() end })
-		Interface:AddDropdown({
-			Name = tr("language"), Options = Locales.Languages, Default = state.language,
-			Callback = function(lang)
-				if lang == state.language then return end
-				state.language = lang
-				task.defer(function() Window:Destroy() build(true) end)
-			end,
-		})
-		Interface:AddLabel({ Text = tr("resize_hint") })
-		Interface:AddButton({ Name = tr("unload"), Callback = function() Nexus:Destroy() end })
-
-		-- About Tab
-		local About = Window:CreateTab(tr("tab_about"), icon("about"))
-		local Info = About:AddSection(tr("about_title"))
-		Info:AddLabel({ Text = string.format(tr("about_version"), tostring(Nexus.Version)) })
-		Info:AddLabel({ Text = string.format(tr("about_signed"), lp.DisplayName, lp.Name) })
-		Info:AddLabel({ Text = "github.com/CryoStrike/NexusUI" })
-
-		if rebuilt then
-			notify(tr("loaded_title"), string.format(tr("lang_set"), state.language), "Success")
-		else
-			notify(tr("loaded_title"), string.format(tr("loaded_text"), state.toggleKey.Name), "Success")
-		end
-	end
-
-	local chosen = Nexus:Load({
-		Name = "NEXUS", Subtitle = "TRANSLUCID THEME", Icon = REPO .. "assets/nexus-ico.png",
-		Accent = ACCENTS.Cyan, Steps = { "Initializing", "Loading modules", "Preparing interface" },
-		Duration = 3, Languages = Locales.Languages, DefaultLanguage = "English",
-		LanguageTitle = "Select language", ContinueText = "Continue",
+	Window = Nexus:CreateWindow({
+		Name = "NEXUS",
+		Subtitle = "TRANSLUCID THEME",
+		Icon = REPO .. "assets/nexus-ico.png",
+		Accent = ACCENTS[state.accentName],
+		ToggleKey = state.toggleKey,
+		Size = UDim2.fromOffset(700, 500),
+		Resizable = true,
+		MinSize = Vector2.new(560, 360),
 	})
-	if not chosen then return end
 
-	state.language = chosen
-	build(false)
+	-- 1. Combat Tab
+	local Combat = Window:CreateTab("Combat", icon("combat"))
+	Combat:AddToggle({ Name = "Combat Module", Default = false, Flag = "combat_module", Callback = function(on) print("Combat:", on) end })
+	Combat:AddSlider({ Name = "Range", Min = 0, Max = 1000, Default = 250, Increment = 1, Suffix = " / 1000", Flag = "combat_range", Callback = function(v) print("Range:", v) end })
+	Combat:AddDropdown({ Name = "Target Priority", Options = { "Nearest", "Lowest Health", "Random" }, Default = "Nearest", Flag = "combat_priority", Callback = function(v) print("Priority:", v) end })
+	Combat:AddKeybind({ Name = "Combat Key", Default = Enum.KeyCode.R, Flag = "combat_key", Callback = function(key) print("Key:", key.Name) end })
+
+	-- 2. Character Tab
+	local Character = Window:CreateTab("Character", icon("character"))
+	Character:AddSlider({
+		Name = "Walk Speed", Min = 16, Max = 100, Default = state.walkSpeed, Increment = 1, Flag = "walk_speed",
+		Callback = function(v) state.walkSpeed = v applyCharacterStats() end,
+	})
+	Character:AddSlider({
+		Name = "Jump Power", Min = 50, Max = 200, Default = state.jumpPower, Increment = 1, Flag = "jump_power",
+		Callback = function(v) state.jumpPower = v applyCharacterStats() end,
+	})
+	Character:AddToggle({ Name = "Anti-AFK", Default = state.antiAfkEnabled, Flag = "anti_afk", Callback = function(on) state.antiAfkEnabled = on setupAntiAFK(on) end })
+	Character:AddButton({ Name = "Reset Character", Callback = function() local hum = getHumanoid() if hum then hum.Health = 0 end notify("Character", "Reset requested.") end })
+
+	-- 3. Farm Tab
+	local Farm = Window:CreateTab("Farm", icon("farm"))
+	Farm:AddToggle({ Name = "Auto Farm", Default = false, Flag = "farm_toggle", Callback = function(on) print("Farm:", on) end })
+	Farm:AddDropdown({ Name = "Farm Mode", Options = { "Nearest", "Selected" }, Default = "Nearest", Flag = "farm_mode", Callback = function(v) print("Mode:", v) end })
+	Farm:AddSlider({ Name = "Farm Delay", Min = 0, Max = 10, Default = 1, Increment = 1, Suffix = " s", Flag = "farm_delay", Callback = function(v) print("Delay:", v) end })
+	Farm:AddInput({ Name = "Target Name", Placeholder = "Enter a name...", Flag = "farm_target", Callback = function(text, enter) if enter then print("Target:", text) end end })
+
+	-- 4. Troll & Teleport Tab
+	local Troll = Window:CreateTab("Troll", icon("troll"))
+	Troll:AddToggle({ Name = "Troll Module", Default = false, Flag = "troll_module", Callback = function(on) print("Troll:", on) end })
+	Troll:AddDropdown({ Name = "Effect", Options = { "Spin", "Bounce", "Shake" }, Default = "Spin", Flag = "troll_effect", Callback = function(v) print("Effect:", v) end })
+	Troll:AddSlider({ Name = "Intensity", Min = 1, Max = 10, Default = 3, Increment = 1, Flag = "troll_intensity", Callback = function(v) print("Intensity:", v) end })
+	Troll:AddDropdown({ Name = "Select Target", Options = getPlayerNames(), Default = getPlayerNames()[1], Flag = "tp_target_dropdown", Callback = function(name) state.selectedTarget = name end })
+	Troll:AddButton({
+		Name = "Teleport to Player",
+		Callback = function()
+			local targetPlayer = Players:FindFirstChild(state.selectedTarget)
+			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				local root = getRootPart()
+				if root then
+					root.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+					notify("Teleport", "Teleported to " .. targetPlayer.Name, "Success")
+				end
+			else
+				notify("Teleport", "Invalid target player.", "Error")
+			end
+		end,
+	})
+	Troll:AddButton({ Name = "Run Effect", Callback = function() notify("Troll", "Effect started.", "Success") end })
+	Troll:AddButton({ Name = "Stop All", Callback = function() notify("Troll", "Effects stopped.", "Warning") end })
+
+	-- 5. Visuals Tab
+	local Visuals = Window:CreateTab("Visuals", icon("visuals"))
+	local Display = Visuals:AddSection("Display & ESP")
+	Display:AddToggle({ Name = "Player ESP", Default = state.espEnabled, Flag = "highlight", Callback = function(on) state.espEnabled = on end })
+	Display:AddSlider({ Name = "Field of View", Min = 40, Max = 120, Default = 70, Increment = 1, Suffix = "°", Flag = "fov", Callback = function(v) workspace.CurrentCamera.FieldOfView = v end })
+	Display:AddDropdown({ Name = "Style", Options = { "Balanced", "Performance", "Quality" }, Default = "Balanced", Callback = function(v) print("Style:", v) end })
+
+	local RoleColors = Visuals:AddSection("ESP Role Colors")
+	RoleColors:AddColorPicker({ Name = "Murderer Color", Default = state.colorMurderer, Flag = "col_murder", Callback = function(color) state.colorMurderer = color end })
+	RoleColors:AddColorPicker({ Name = "Sheriff Color", Default = state.colorSheriff, Flag = "col_sheriff", Callback = function(color) state.colorSheriff = color end })
+	RoleColors:AddColorPicker({ Name = "Innocent Color", Default = state.colorInnocent, Flag = "col_innocent", Callback = function(color) state.colorInnocent = color end })
+
+	-- 6. Settings Tab
+	local Settings = Window:CreateTab("Settings", icon("settings"))
+	local Theming = Settings:AddSection("Theme Selection")
+	Theming:AddDropdown({
+		Name = "Accent Colour", Options = { "Cyan", "Violet", "Emerald", "Crimson", "Gold", "Red", "Blue", "Green" }, Default = state.accentName,
+		Callback = function(name) state.accentName = name Window:SetAccent(ACCENTS[name]) end,
+	})
+
+	local Interface = Settings:AddSection("Interface")
+	Interface:AddKeybind({ Name = "Hide Hub Key", Default = state.toggleKey, OnChanged = function(key) if key then state.toggleKey = key Window:SetToggleKey(key) end end })
+	Interface:AddButton({ Name = "Minimize Hub", Callback = function() Window:Minimize() end })
+	Interface:AddLabel({ Text = "Language set to: " .. state.language })
+	Interface:AddButton({ Name = "Unload NEXUS", Callback = function() Nexus:Destroy() end })
+
+	-- 7. About Tab
+	local About = Window:CreateTab("About", icon("about"))
+	local Info = About:AddSection("NEXUS UI")
+	Info:AddLabel({ Text = string.format("Translucid Theme - v%s", tostring(Nexus.Version)) })
+	Info:AddLabel({ Text = string.format("Signed in as %s (@%s)", lp.DisplayName, lp.Name) })
+	Info:AddLabel({ Text = "github.com/CryoStrike/NexusUI" })
+
+	notify("NEXUS Loaded", "Press " .. state.toggleKey.Name .. " to toggle the hub.", "Success")
 end
