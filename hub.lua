@@ -3,7 +3,7 @@
 ]]
 
 return function(REPO, selectedLanguage)
-	local Nexus = loadstring(game:HttpGet(REPO .. "init.lua"))()
+	local Nexus = loadstring(game:HttpGet("https://raw.githubusercontent.com/CryoStrike/NexusUI/main/init.lua"))()
 
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
