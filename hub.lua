@@ -1,5 +1,5 @@
 --[[
-	NEXUS UI - Main Hub Module (All Categories Kept, Cleaned)
+	NEXUS UI - Main Hub Module
 ]]
 
 return function(REPO, selectedLanguage)
@@ -230,7 +230,7 @@ return function(REPO, selectedLanguage)
 	local Interface = Settings:AddSection("Interface")
 	Interface:AddKeybind({ Name = "Hide Hub Key", Default = state.toggleKey, OnChanged = function(key) if key then state.toggleKey = key Window:SetToggleKey(key) end end })
 	Interface:AddButton({ Name = "Minimize Hub", Callback = function() Window:Minimize() end })
-	Interface:AddLabel({ Text = "Language set to: " .. state.language })
+	Interface:AddLabel({ Text = "Language: " .. state.language })
 	Interface:AddButton({ Name = "Unload NEXUS", Callback = function() Nexus:Destroy() end })
 
 	-- 7. About Tab
