@@ -31,6 +31,7 @@ Language.List = { "English", "Français", "Español", "Deutsch", "Português" }
 
 Language.Strings = {
 	English = {
+		footer = 'STATUS: <font color="rgb(0,224,255)">ACTIVE</font>  |  [v%s]',
 		tab_combat = "Combat", tab_character = "Character", tab_farm = "Farm", tab_troll = "Troll",
 		tab_visuals = "Visuals", tab_settings = "Settings", tab_about = "About",
 		combat_module = "Combat Module", range = "Range", priority = "Target Priority", combat_key = "Combat Key",
@@ -47,6 +48,7 @@ Language.Strings = {
 		loaded_title = "NEXUS loaded", loaded_text = "Press %s to hide or show the hub.", lang_set = "Language: %s",
 	},
 	["Français"] = {
+		footer = 'STATUT: <font color="rgb(0,224,255)">ACTIF</font>  |  [v%s]',
 		tab_combat = "Combat", tab_character = "Personnage", tab_farm = "Farm", tab_troll = "Troll",
 		tab_visuals = "Visuels", tab_settings = "Paramètres", tab_about = "À propos",
 		combat_module = "Module de combat", range = "Portée", priority = "Priorité de cible", combat_key = "Touche de combat",
@@ -63,6 +65,7 @@ Language.Strings = {
 		loaded_title = "NEXUS chargé", loaded_text = "Appuyez sur %s pour masquer ou afficher le hub.", lang_set = "Langue : %s",
 	},
 	["Español"] = {
+		footer = 'ESTADO: <font color="rgb(0,224,255)">ACTIVO</font>  |  [v%s]',
 		tab_combat = "Combate", tab_character = "Personaje", tab_farm = "Farmeo", tab_troll = "Troll",
 		tab_visuals = "Visuales", tab_settings = "Ajustes", tab_about = "Acerca de",
 		combat_module = "Módulo de combate", range = "Alcance", priority = "Prioridad de objetivo", combat_key = "Tecla de combate",
@@ -79,6 +82,7 @@ Language.Strings = {
 		loaded_title = "NEXUS cargado", loaded_text = "Pulsa %s para ocultar o mostrar el hub.", lang_set = "Idioma: %s",
 	},
 	Deutsch = {
+		footer = 'STATUS: <font color="rgb(0,224,255)">AKTIV</font>  |  [v%s]',
 		tab_combat = "Kampf", tab_character = "Charakter", tab_farm = "Farm", tab_troll = "Troll",
 		tab_visuals = "Visuals", tab_settings = "Optionen", tab_about = "Info",
 		combat_module = "Kampfmodul", range = "Reichweite", priority = "Zielpriorität", combat_key = "Kampftaste",
@@ -95,6 +99,7 @@ Language.Strings = {
 		loaded_title = "NEXUS geladen", loaded_text = "Drücke %s, um den Hub aus- oder einzublenden.", lang_set = "Sprache: %s",
 	},
 	["Português"] = {
+		footer = 'STATUS: <font color="rgb(0,224,255)">ATIVO</font>  |  [v%s]',
 		tab_combat = "Combate", tab_character = "Personagem", tab_farm = "Farm", tab_troll = "Troll",
 		tab_visuals = "Visuais", tab_settings = "Opções", tab_about = "Sobre",
 		combat_module = "Módulo de combate", range = "Alcance", priority = "Prioridade de alvo", combat_key = "Tecla de combate",

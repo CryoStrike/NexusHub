@@ -34,7 +34,7 @@ local Hub = {}
 
 --------------------------------------------------------------- Settings
 local ACCENTS = {
-	Cyan = Color3.fromRGB(0, 170, 255), Violet = Color3.fromRGB(150, 110, 255),
+	Cyan = Color3.fromRGB(0, 224, 255), Violet = Color3.fromRGB(150, 110, 255),
 	Emerald = Color3.fromRGB(40, 210, 140), Crimson = Color3.fromRGB(255, 80, 100), Gold = Color3.fromRGB(230, 190, 100),
 	Red = Color3.fromRGB(255, 50, 50), Blue = Color3.fromRGB(50, 100, 255), Green = Color3.fromRGB(50, 255, 50),
 }
@@ -427,9 +427,10 @@ function Hub.Build(rebuilt)
 		Icon = Config.Icon, -- or "rbxassetid://<uploaded logo id>"
 		Accent = ACCENTS[state.accentName],
 		ToggleKey = state.toggleKey,
-		Size = UDim2.fromOffset(700, 500),
+		Size = UDim2.fromOffset(720, 540),
+		Footer = tr("footer", Nexus.Version),
 		Resizable = true,
-		MinSize = Vector2.new(560, 360),
+		MinSize = Vector2.new(600, 440),
 	})
 	-- Closing the window (x), Nexus:Destroy() and re-running the script all end up here.
 	-- A language change also destroys the window, but must keep the features running.

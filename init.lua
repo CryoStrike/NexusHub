@@ -77,7 +77,7 @@ local chosen = Nexus:Load({
 	Languages = Language.List,
 	DefaultLanguage = Language.Default,
 	LanguageTitle = "Select language",
-	ContinueText = "Continue",
+	ContinueText = "Continue to hub",
 })
 if not chosen then return end -- loader was closed (e.g. the script was re-executed)
 
