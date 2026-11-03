@@ -54,7 +54,7 @@ local state = {
 	-- Character
 	walkSpeed = 16, walkSpeedActive = false,
 	jumpPower = 50, jumpPowerActive = false,
-	flyEnabled = false, flySpeed = 50,
+	flyEnabled = false, flySpeed = 50, flyPose = false, flyTwoArms = false,
 	noclipEnabled = false, infJumpEnabled = false,
 	invisibleEnabled = false, invisibleDepth = 200000, ghostAlpha = 0.5, revealKey = Enum.KeyCode.R,
 
@@ -355,6 +355,71 @@ local function ghostHeartbeat()
 end
 
 ---------------------------------------------------------------- Fly
+-- Superhero pose: while flying the Motor6D joints are posed by hand (no animation IDs, R6 + R15).
+-- Each joint's C0 is offset, and the original C0 is given back when the pose stops.
+local motors = {}          -- [joint name without spaces] = { motor = Motor6D, c0 = CFrame }
+local poseActive = false
+
+local function capturePose()
+	local char, _, hum = getParts()
+	if not char then return end
+	motors = {}
+	for _, d in ipairs(char:GetDescendants()) do
+		if d:IsA("Motor6D") then
+			local key = d.Name:gsub("%s", "")
+			motors[key] = { motor = d, c0 = d.C0 }
+		end
+	end
+	-- stop leftover animation tracks so nothing fights the pose
+	local animator = hum and hum:FindFirstChildOfClass("Animator")
+	if animator then
+		for _, track in ipairs(animator:GetPlayingAnimationTracks()) do track:Stop(0.15) end
+	end
+	poseActive = true
+end
+
+local function restorePose()
+	for _, m in pairs(motors) do
+		if m.motor and m.motor.Parent then m.motor.C0 = m.c0 end
+	end
+	motors = {}
+	poseActive = false
+end
+
+local function setJoint(name, rot)
+	local m = motors[name]
+	if m and m.motor.Parent then
+		m.motor.C0 = CFrame.new(m.c0.Position) * rot * m.c0.Rotation
+	end
+end
+
+local function lerpNum(a, b, t) return a + (b - a) * t end
+
+-- p: 0 = relaxed hover, 1 = full Superman pose
+local function applyPose(p)
+	local A = CFrame.Angles
+	local side = math.rad(32)
+	local rArm = A(lerpNum(0, math.rad(175), p), 0, 0) * A(0, 0, lerpNum(side, 0.05, p))
+	local lArm
+	if state.flyTwoArms then
+		lArm = A(lerpNum(0, math.rad(175), p), 0, 0) * A(0, 0, lerpNum(-side, -0.05, p))
+	else
+		lArm = A(lerpNum(0, -0.3, p), 0, 0) * A(0, 0, lerpNum(-side, -0.12, p))
+	end
+	local rLeg = A(lerpNum(0.1, -math.rad(14), p), 0, 0) * A(0, 0, lerpNum(0.12, 0.02, p))
+	local lLeg = A(lerpNum(0.1, -math.rad(8), p), 0, 0) * A(0, 0, lerpNum(-0.12, -0.02, p))
+	local knee = A(lerpNum(-0.15, -math.rad(25), p), 0, 0)
+	local neck = A(math.rad(60) * p, 0, 0) -- head tilts up to look ahead
+
+	setJoint("RightShoulder", rArm)
+	setJoint("LeftShoulder", lArm)
+	setJoint("RightHip", rLeg)
+	setJoint("LeftHip", lLeg)
+	setJoint("RightKnee", knee)
+	setJoint("LeftKnee", knee)
+	setJoint("Neck", neck)
+end
+
 local bodyGyro, bodyVelocity
 local function toggleFly(on)
 	state.flyEnabled = on
@@ -363,6 +428,7 @@ local function toggleFly(on)
 	if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
 	if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
 	if not on then
+		restorePose()
 		if hum then hum.PlatformStand = false end
 		return
 	end
@@ -382,21 +448,50 @@ local function toggleFly(on)
 
 	local mine = session
 	task.spawn(function()
+		local curVel, blend = Vector3.new(), 0
 		while running and session == mine and state.flyEnabled and root.Parent and bodyVelocity == vel do
 			local camera = Workspace.CurrentCamera
+			local camCF = camera.CFrame
 			local dir = Vector3.new()
-			if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + camera.CFrame.LookVector end
-			if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - camera.CFrame.LookVector end
-			if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - camera.CFrame.RightVector end
-			if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + camera.CFrame.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + camCF.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - camCF.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - camCF.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + camCF.RightVector end
 			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
 			if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
 				dir = dir - Vector3.new(0, 1, 0)
 			end
-			vel.Velocity = dir.Magnitude > 0 and dir.Unit * state.flySpeed or Vector3.new(0, 0, 0)
-			gyro.CFrame = camera.CFrame
-			RunService.RenderStepped:Wait()
+			local target = dir.Magnitude > 0 and dir.Unit * state.flySpeed or Vector3.new(0, 0, 0)
+			vel.Velocity = target
+
+			local dt = RunService.RenderStepped:Wait()
+
+			if state.flyPose then
+				if not poseActive then capturePose() end
+				curVel = curVel:Lerp(target, 1 - math.exp(-7 * dt))
+				local flatLook = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z)
+				flatLook = flatLook.Magnitude < 0.001 and Vector3.zAxis or flatLook.Unit
+
+				local speedNow = curVel.Magnitude
+				local pTarget, heading = 0, flatLook
+				if speedNow > 2 then
+					heading = curVel.Unit
+					local facing = heading:Dot(camCF.LookVector) -- flying backwards stays upright
+					pTarget = math.clamp(speedNow / (state.flySpeed * 0.75), 0, 1) * math.clamp((facing + 0.3) / 0.6, 0, 1)
+				end
+				blend = blend + (pTarget - blend) * (1 - math.exp(-6 * dt))
+
+				local upright = CFrame.lookAt(Vector3.zero, flatLook)
+				local hint = math.abs(heading.Y) > 0.98 and flatLook or Vector3.yAxis
+				local horizontal = CFrame.lookAt(Vector3.zero, heading, hint) * CFrame.Angles(-math.pi / 2, 0, 0)
+				gyro.CFrame = upright:Lerp(horizontal, blend)
+				applyPose(blend)
+			else
+				if poseActive then restorePose() blend, curVel = 0, Vector3.new() end
+				gyro.CFrame = camCF
+			end
 		end
+		restorePose()
 		if bodyVelocity == vel then
 			if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
 			vel:Destroy()
@@ -753,6 +848,8 @@ local function buildCharacter(tab)
 	})
 
 	featureToggle(tab, "fly", tr("fly"), state.flyEnabled, "fly_toggle")
+	tab:AddToggle({ Name = tr("fly_pose"), Default = state.flyPose, Flag = "fly_pose", Callback = function(on) state.flyPose = on end })
+	tab:AddToggle({ Name = tr("fly_two_arms"), Default = state.flyTwoArms, Flag = "fly_two_arms", Callback = function(on) state.flyTwoArms = on end })
 	tab:AddSlider({
 		Name = tr("fly_speed"), Min = 16, Max = 200, Default = state.flySpeed, Increment = 1, Flag = "fly_speed",
 		Callback = function(v) state.flySpeed = v end,

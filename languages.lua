@@ -32,6 +32,7 @@ Language.List = { "English", "Français", "Español", "Deutsch", "Português" }
 Language.Strings = {
 	English = {
 		footer = 'STATUS: <font color="rgb(0,224,255)">ACTIVE</font>  |  [v%s]',
+		fly_pose = "Superhero Flight Pose", fly_two_arms = "Both Arms Forward",
 		tab_tp = "TP", tab_keys = "Keys", aimbot = "Aimbot Switch", aimbot_range = "Aimbot Range",
 		aimbot_on = "Aimbot enabled (smart role mode)", aimbot_off = "Aimbot disabled", enable_walk = "Enable WalkSpeed", enable_jump = "Enable JumpPower",
 		invisible = "Invisible", ghost_opacity = "Ghost Opacity", invisible_on = "Invisible enabled (hold %s to show your gear)", invisible_off = "Invisible disabled",
@@ -60,6 +61,7 @@ Language.Strings = {
 	},
 	["Français"] = {
 		footer = 'STATUT: <font color="rgb(0,224,255)">ACTIF</font>  |  [v%s]',
+		fly_pose = "Pose de vol de super-héros", fly_two_arms = "Les deux bras en avant",
 		tab_tp = "TP", tab_keys = "Touches", aimbot = "Interrupteur Aimbot", aimbot_range = "Portée de l'Aimbot",
 		aimbot_on = "Aimbot activé (mode rôle intelligent)", aimbot_off = "Aimbot désactivé", enable_walk = "Activer la vitesse de marche", enable_jump = "Activer la puissance de saut",
 		invisible = "Invisible", ghost_opacity = "Opacité fantôme", invisible_on = "Invisible activé (maintenez %s pour montrer votre équipement)", invisible_off = "Invisible désactivé",
@@ -88,6 +90,7 @@ Language.Strings = {
 	},
 	["Español"] = {
 		footer = 'ESTADO: <font color="rgb(0,224,255)">ACTIVO</font>  |  [v%s]',
+		fly_pose = "Pose de vuelo de superhéroe", fly_two_arms = "Ambos brazos al frente",
 		tab_tp = "TP", tab_keys = "Teclas", aimbot = "Interruptor Aimbot", aimbot_range = "Alcance del Aimbot",
 		aimbot_on = "Aimbot activado (modo de rol inteligente)", aimbot_off = "Aimbot desactivado", enable_walk = "Activar velocidad de caminar", enable_jump = "Activar fuerza de salto",
 		invisible = "Invisible", ghost_opacity = "Opacidad fantasma", invisible_on = "Invisible activado (mantén %s para mostrar tu equipo)", invisible_off = "Invisible desactivado",
@@ -116,6 +119,7 @@ Language.Strings = {
 	},
 	Deutsch = {
 		footer = 'STATUS: <font color="rgb(0,224,255)">AKTIV</font>  |  [v%s]',
+		fly_pose = "Superhelden-Flugpose", fly_two_arms = "Beide Arme nach vorn",
 		tab_tp = "TP", tab_keys = "Tasten", aimbot = "Aimbot-Schalter", aimbot_range = "Aimbot-Reichweite",
 		aimbot_on = "Aimbot aktiviert (intelligenter Rollenmodus)", aimbot_off = "Aimbot deaktiviert", enable_walk = "Lauftempo aktivieren", enable_jump = "Sprungkraft aktivieren",
 		invisible = "Unsichtbar", ghost_opacity = "Geister-Deckkraft", invisible_on = "Unsichtbar aktiviert (%s halten, um die Ausrüstung zu zeigen)", invisible_off = "Unsichtbar deaktiviert",
@@ -144,6 +148,7 @@ Language.Strings = {
 	},
 	["Português"] = {
 		footer = 'STATUS: <font color="rgb(0,224,255)">ATIVO</font>  |  [v%s]',
+		fly_pose = "Pose de voo de super-herói", fly_two_arms = "Ambos os braços à frente",
 		tab_tp = "TP", tab_keys = "Teclas", aimbot = "Interruptor do Aimbot", aimbot_range = "Alcance do Aimbot",
 		aimbot_on = "Aimbot ativado (modo de função inteligente)", aimbot_off = "Aimbot desativado", enable_walk = "Ativar velocidade de caminhada", enable_jump = "Ativar força de pulo",
 		invisible = "Invisível", ghost_opacity = "Opacidade fantasma", invisible_on = "Invisível ativado (segure %s para mostrar seu equipamento)", invisible_off = "Invisível desativado",
